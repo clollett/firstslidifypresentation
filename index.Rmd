@@ -1,0 +1,83 @@
+---
+title       : Studying MPG for pairs for possible predictors
+subtitle    : A shiny application
+author      : Carlos L.  
+job         : Data Sciences Specialization student
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : [bootstrap,quiz, shiny, interactive]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+
+
+--- 
+### MOTIVATIONS
+
+The mtcars set is database used in different stages of data sciences courses due to its simplicity and yet enough complexity to avoid trivial analysis.
+
+The motivation of this shiny appliaction is to allow students to see different behaviors towards different pairs of predictors. 
+Features:
+
+* Full selection of first predictors and 2nd predictor restricted to discrete features.
+* Exploratory plots, results of generalized linear model predictions in graph and in text
+
+--- 
+### APPLICATION INTERFACE
+
+```{r opts.label = 'shiny'}
+slidifyUI(pageWithSidebar(
+  headerPanel("Studying Miles per Gallon for pairs for possible predictors"),
+  sidebarPanel(
+    selectInput('sel_predictor', 'Select first predictor', c('# of cylinders', 'Displacement(cu.in.)','Gross horsepower','Rear axle ratio','Weight','Quarter-mile time','V/S','Transmission','# forward gears','# carburetors')),
+    radioButtons('colorBy', 'Coloring by the 2nd predictor',c('#Cylinder', 'VS','Transmission','# forward gears','# carburetors')
+    ),
+    h3("INSTRUCTIONS")
+  ),
+  mainPanel(
+   tabsetPanel(
+      tabPanel("MPG vs 2 predictors"),
+      tabPanel("Predictions vs. Real values of MPG on GLM of 2 Predictors"),
+      tabPanel("GLM Summary")
+ 
+    )
+  )
+)
+)
+```
+
+---
+
+### FEATURES. PLOTS
+
+```{r echo=FALSE,results='hide'}
+data(mtcars)
+mpgData <- data.frame(mtcars)
+mpgData$am <- factor(mpgData$am,labels=c("Automatic","Manual"))
+mpgData$cyl <- factor(mpgData$cyl)
+mpgData$vs <- factor(mpgData$vs)
+mpgData$gear <- factor(mpgData$gear)
+mpgData$carb <- factor(mpgData$carb)
+fit <- glm(mpg~cyl+am,data=mpgData,family="gaussian")
+predvalues <- predict(fit,type="response")
+predresults <- data.frame(MPG_PredVals=predvalues,MPG_RealVals=mpgData$mpg)
+
+```
+
+```{r echo=FALSE, fig.width=6,fig.height=3,fig.keep='all'}
+layout(t(1:2))
+ggplot(mpgData, aes_string(x="cyl", y="mpg",colour="am")) + geom_point()+ggtitle("MPG vs 2 predictors")
+ggplot(predresults,aes(x=MPG_RealVals,y=MPG_PredVals))+ geom_point()+xlab("miles per gallon real values")+ylab("miles per gallon model predicted values")+ggtitle("Predictions vs. Real values of MPG on GLM of 2 Predictors")
+
+```
+
+* __MPG vs 2 predictors__: This feature shows the scatter plot mpg vs. the first predictor colored by the second predictor, so it is possible to explore possible groups and make a initial evaluation of the predictors
+* __Predictions vs. Real values of MPG on GLM of 2 Predictors__: Our second feature shows the result of creating generalized linear model on the selected predictor. This is done by plotting predicted values of the data against the actual values.
+* __GLM Summary__(next slide): It shows all the information about the generalized linear model of mpg from the 2 chosen predictors
+
+---
+
+```{r echo=FALSE,fig.height=1,fig.width=1}
+
+print(summary(fit))
+
+```
